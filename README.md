@@ -1,3 +1,12 @@
+# 18i: Balancing With CoM Error Hardware
+
+## Dependencies
+TODO
+
+## Build and Run the Project
+TODO
+
+# TODO
 This git repo is intended for code that we can run when we want to show off the
 robot at demos. It will contain code for:
 
