@@ -4,7 +4,18 @@
 TODO
 
 ## Build and Run the Project
-TODO
+1. Enter the clone/downloaded project directory
+
+2. Build the Project
+
+    mkdir build
+    cd build
+    cmake ..
+    make
+
+3. Run the Project
+
+    ./{project_name}
 
 # TODO
 This git repo is intended for code that we can run when we want to show off the
