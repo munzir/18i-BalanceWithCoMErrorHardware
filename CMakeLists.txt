@@ -61,7 +61,10 @@ target_sources(ddp INTERFACE ${DDP_SOURCES})
 
 # Collect the source, script and fortran files
 file(GLOB main_source "src/*.cpp" "src/*.c" "../experiments/common/library/*.cpp"
-    "../18h-Util/file_ops.hpp" "../18h-Util/file_ops.cpp")
+    "../18h-Util/file_ops.hpp" "../18h-Util/file_ops.cpp"
+    "../18h-Util/ESO.hpp"
+    "../18h-Util/adrc.hpp" "../18h-Util/adrc.cpp"
+    "../18h-Util/lqr.hpp" "../18h-Util/lqr.cpp")
 file(GLOB scripts_source "exe/*.cpp" "exe/tests/*.cpp")
 list(SORT scripts_source)
 

@@ -1,19 +1,19 @@
 # 18i: Balancing With CoM Error Hardware
 
-## Dependencies
+### Dependencies
 TODO
 
-## Build and Run the Project
-1. Enter the clone/downloaded project directory
+### Build and Run the Project
+1: Enter the clone/downloaded project directory
 
-2. Build the Project
+2: Build the Project
 
     mkdir build
     cd build
     cmake ..
     make
 
-3. Run the Project
+3: Run the Project
 
     ./{project_name}
 
