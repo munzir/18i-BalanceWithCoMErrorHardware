@@ -12,6 +12,7 @@
 #include "kore/display.hpp"
 #include "lqr.hpp"
 #include "../../18h-Util/file_ops.hpp"
+#include "ESO.hpp"
 
 using namespace dart::utils;
 using namespace Krang;
@@ -310,6 +311,10 @@ void run () {
     rightFTData << 0,0,0,0,0,0;
     size_t leftFTIter = 0, rightFTIter = 0;
 
+    // Initialize Extended State Observers
+    ESO *EthWheel;
+    ESO *EthCOM;
+
     // Torque to current conversion
     // Motor Constant
     // TODO: Copy comments from repo 28 mpc branch
@@ -575,6 +580,16 @@ void run () {
                     printf("\n\n\nMode 2\n\n\n");
                     K = K_stand;
                     MODE = 2;
+
+                    // Initialize ESOs if its the first iteration of the while loop
+                    Eigen::Vector3d EthWheel_Init(state(2), state(3), 0.0);
+                    Eigen::Vector3d EthWheel_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
+                    EthWheel = (ESO*) new ESO(EthWheel_Init, EthWheel_ObsGains);
+
+                    Eigen::Vector3d EthCOM_Init(state(0), state(1), 0.0);
+                    Eigen::Vector3d EthCOM_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
+                    EthCOM = (ESO*) new ESO(EthCOM_Init, EthCOM_ObsGains);
+        
                 }   else {
                     printf("\n\n\nCan't stand up, balancing error is too high!\n\n\n");
                 }
@@ -586,6 +601,11 @@ void run () {
                     printf("\n\n\nMode 3\n\n\n");
                     K = K_sit;
                     MODE = 3;
+
+                    // Delete the ESOs
+                    delete EthWheel;
+                    delete EthCOM;
+
                 } else {
                     printf("\n\n\nCan't sit down, Waist is too high!\n\n\n");
                 }
