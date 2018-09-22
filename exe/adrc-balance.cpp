@@ -282,7 +282,7 @@ void controlSchunkGrippers () {
 /// The continuous control loop which has 4 state variables, {x, x., psi, psi.}, where
 /// x is for the position along the heading direction and psi is the heading angle. We create
 /// reference x and psi values from the joystick and follow them with pd control.
-void run () {
+void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
 
     // Send a message; set the event code and the priority
     somatic_d_event(&daemon_cx, SOMATIC__EVENT__PRIORITIES__NOTICE,
@@ -330,30 +330,30 @@ void run () {
 
     //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
     //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
-    Eigen::MatrixXd Q;
-    Eigen::MatrixXd R;
+    //Eigen::MatrixXd Q;
+    //Eigen::MatrixXd R;
 
-    string QFilename = "../Q.txt";
-    //string QFilename = "Q.txt";
-    try {
-        cout << "Reading cost Q ...\n";
-        Q = readInputFileAsMatrix(QFilename);
-        cout << "|-> Done\n";
-    } catch (exception& e) {
-        cout << e.what() << endl;
-    }
-    string RFilename = "../R.txt";
-    //string RFilename = "R.txt";
-    try {
-        cout << "Reading cost R ...\n";
-        R = readInputFileAsMatrix(RFilename);
-        cout << "|-> Done\n";
-    } catch (exception& e) {
-        cout << e.what() << endl;
-    }
+    //string QFilename = "../Q.txt";
+    ////string QFilename = "Q.txt";
+    //try {
+    //    cout << "Reading cost Q ...\n";
+    //    Q = readInputFileAsMatrix(QFilename);
+    //    cout << "|-> Done\n";
+    //} catch (exception& e) {
+    //    cout << e.what() << endl;
+    //}
+    //string RFilename = "../R.txt";
+    ////string RFilename = "R.txt";
+    //try {
+    //    cout << "Reading cost R ...\n";
+    //    R = readInputFileAsMatrix(RFilename);
+    //    cout << "|-> Done\n";
+    //} catch (exception& e) {
+    //    cout << e.what() << endl;
+    //}
 
-    cout << "Q matrix: " << Q << endl;
-    cout << "R matrix: " << R << endl;
+    //cout << "Q matrix: " << Q << endl;
+    //cout << "R matrix: " << R << endl;
 
     //Q << 300*1, 0, 0, 0,
     //   0, 300*320, 0, 0,
@@ -697,6 +697,34 @@ SkeletonPtr setParameters(SkeletonPtr robot, Eigen::MatrixXd betaParams, int bod
 /// The main thread
 int main(int argc, char* argv[]) {
 
+    //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
+    //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
+    Eigen::MatrixXd Q;
+    Eigen::MatrixXd R;
+
+    string QFilename = "../Q.txt";
+    //string QFilename = "Q.txt";
+    try {
+        cout << "Reading cost Q ...\n";
+        Q = readInputFileAsMatrix(QFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+    string RFilename = "../R.txt";
+    //string RFilename = "R.txt";
+    try {
+        cout << "Reading cost R ...\n";
+        R = readInputFileAsMatrix(RFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+
+    cout << "Q matrix: " << Q << endl;
+    cout << "R matrix: " << R << endl;
+
+
     // Load the world and the robot
     DartLoader dl;
     // world = dl.parseWorld("/etc/kore/scenes/01-World-Robot.urdf");
@@ -742,7 +770,7 @@ int main(int argc, char* argv[]) {
 
     // Initialize, run, destroy
     init();
-    run();
+    run(Q, R);
     destroy();
     return 0;
 }
