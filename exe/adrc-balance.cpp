@@ -324,6 +324,8 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
     size_t lastMode = MODE; bool lastStart = start;
     Eigen::MatrixXd A = Eigen::MatrixXd::Zero(4,4);
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(4,1);
+    std::ofstream linDynFile;
+    linDynFile.open("linDyn.txt");
     Eigen::VectorXd B_thWheel = Eigen::VectorXd::Zero(3);
     Eigen::VectorXd B_thCOM = Eigen::VectorXd::Zero(3);
     Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
@@ -516,6 +518,14 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
                 MODE = 4;
                 mode4iter = 0;
                 K = K_balLow;
+
+                // print out A and B to file
+                computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
+                linDynFile << "A: " << endl;
+                linDynFile << A << endl << endl;
+                linDynFile << "B: " << endl;
+                linDynFile << B << endl << endl;
+                linDynFile.close();
             }
         }
         // COM error correction in balLow mode
