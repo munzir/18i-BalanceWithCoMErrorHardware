@@ -7,6 +7,7 @@
 
 #include "adrc.hpp"
 #include "../../18h-Util/file_ops.hpp"
+#include "lqr.hpp"
 
 using namespace std;
 using namespace dart;
@@ -144,4 +145,37 @@ void computeLinearizedDynamics(const SkeletonPtr robot, \
     B_thCOM << 0,
            -c1/delta,
            0;
+}
+
+// ==========================================================================
+// 
+void activeDisturbanceRejectionControl( 
+  //inputs
+  const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, const Eigen::MatrixXd& Q, const Eigen::MatrixXd& R, 
+  ESO* EthWheel, ESO* EthCOM, const Eigen::VectorXd& B_thWheel, const Eigen::VectorXd& B_thCOM, 
+  const Eigen::VectorXd& state, const Eigen::VectorXd& refState, //refState is (thCOM, dthCOM, thWheels, dthWheels, thSpin, dthSpin) 
+  const double& dt,
+  // outputs
+  Eigen::VectorXd& u_thWheel, Eigen::VectorXd& u_thCOM)
+{
+
+  // LQR for controller gains
+  Eigen::VectorXd F = Eigen::VectorXd::Zero(4);
+  lqr(A, B, Q, R, F);
+  
+  // Observer Control Gains
+  double F_thWheel = F(1);
+  double F_dthWheel = F(3);
+  double F_thCOM = F(0);
+  double F_dthCOM = F(2);
+
+  // ESO update
+  u_thWheel(0) = -F_thWheel*(state(2) - refState(2)) - F_dthWheel*(state(3) - refState(3));
+  u_thCOM(0) = -F_thCOM*(state(0) - refState(0)) - F_dthCOM*(state(1)- refState(1));
+  EthWheel->update(state(2), B_thWheel, u_thWheel, dt);
+  EthCOM->update(state(0), B_thCOM, u_thCOM, dt);
+
+  // Compensate for disturbance
+  u_thWheel(0) -= EthWheel->getState()(2)/B_thWheel(1);
+  u_thCOM(0)  -= EthCOM->getState()(2)/B_thCOM(1);
 }
