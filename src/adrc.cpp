@@ -6,6 +6,7 @@
  */
 
 #include "adrc.hpp"
+#include "../../18h-Util/file_ops.hpp"
 
 using namespace std;
 using namespace dart;
@@ -13,39 +14,26 @@ using namespace dart::dynamics;
 
 // ==========================================================================
 // Read file for gains
-//void readCosts() {
-//
-//    Vector6d* kgains [] = {&K_groundLo, &K_stand, &K_sit, &K_balLow, &K_balHigh, &K_groundHi};
-//    Vector2d* jgains [] = {&J_ground, &J_stand, &J_sit, &J_balLow, &J_balHigh, &J_ground};
-//    ifstream file ("../gains.txt");
-//    assert(file.is_open());
-//    char line [1024];
-//    for(size_t k_idx = 0; k_idx < 6; k_idx++) {
-//        *kgains[k_idx] = Vector6d::Zero();
-//        *jgains[k_idx] = Vector2d::Zero();
-//        file.getline(line, 1024);
-//        std::stringstream stream(line, std::stringstream::in);
-//        size_t i = 0;
-//        double newDouble;
-//        while ((i < 6) && (stream >> newDouble)) (*kgains[k_idx])(i++) = newDouble;
-//        while (stream >> newDouble) (*jgains[k_idx])(i++ - 6) = newDouble;
-//    }
-//    file.close();
-//
-//    pv(K_groundLo);
-//    pv(K_groundHi);
-//    pv(J_ground);
-//    pv(K_stand);
-//    pv(J_stand);
-//    pv(K_sit);
-//    pv(J_sit);
-//    pv(K_balLow);
-//    pv(J_balLow);
-//    pv(K_balHigh);
-//    pv(J_balHigh);
-//
-//    K = K_groundLo;
-//}
+void readCosts() {
+
+    string inputQFilename = "../Q.txt";
+    try {
+        cout << "Reading Q matrix ...\n";
+        Q = readInputFileAsMatrix(inputQFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+
+    string inputRFilename = "../R.txt";
+    try {
+        cout << "Reading R matrix ...\n";
+        R = readInputFileAsMatrix(inputRFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+}
 
 // ==========================================================================
 // Get the center of mass of body excluding wheels

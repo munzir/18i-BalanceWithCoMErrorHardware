@@ -326,14 +326,14 @@ void run () {
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(4,1);
     Eigen::VectorXd B_thWheel = Eigen::VectorXd::Zero(3);
     Eigen::VectorXd B_thCOM = Eigen::VectorXd::Zero(3);
-    Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
-    Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
+    //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
+    //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
     Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
-    Q << 300*1, 0, 0, 0,
-       0, 300*320, 0, 0,
-       0, 0, 300*100, 0,
-       0, 0, 0, 300*300;
-    R << 500;
+    //Q << 300*1, 0, 0, 0,
+    //   0, 300*320, 0, 0,
+    //   0, 0, 300*100, 0,
+    //   0, 0, 0, 300*300;
+    //R << 500;
     while(!somatic_sig_received) {
 
         bool debug = (c_++ % 20 == 0);
