@@ -10,11 +10,11 @@
 using namespace dart;
 using namespace dart::dynamics;
 
-//Eigen::MatrixXd Q;
-//Eigen::MatrixXd R;
+Eigen::MatrixXd Q;
+Eigen::MatrixXd R;
 
 // read the costs Q and R
-//void readCosts();
+void readCosts();
 
 // get body com
 Eigen::Vector3d getBodyCOM(SkeletonPtr robot);
