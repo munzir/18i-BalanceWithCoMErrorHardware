@@ -333,14 +333,13 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
     Eigen::VectorXd B_thCOM = Eigen::VectorXd::Zero(3);
     Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
 
-    //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
-    //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
-    Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
     Eigen::VectorXd u_thWheel, u_thCOM, u_spin;
     u_thWheel = Eigen::VectorXd::Zero(1);
     u_thCOM = Eigen::VectorXd::Zero(1);
     u_spin = Eigen::VectorXd::Zero(1);
 
+    //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
+    //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
     //Q << 300*1, 0, 0, 0,
     //   0, 300*320, 0, 0,
     //   0, 0, 300*100, 0,
