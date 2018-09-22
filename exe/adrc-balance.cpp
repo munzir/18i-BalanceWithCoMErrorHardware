@@ -393,7 +393,7 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
         lqr(A, B, Q, R, LQR_Gains);
         LQR_Gains /= (GR * km);
-        
+
 
         if(debug) cout << "lqr gains" << LQR_Gains.transpose() << endl;
         if(debug) cout << "\nstate: " << state.transpose() << endl;
@@ -534,8 +534,8 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         if(MODE == 2 || MODE == 4 || MODE == 5) {
             // read gains_info.txt to understand the following
             K(0) = -LQR_Gains(0);
-            K(1) = -LQR_Gains(2);
-            K(2) = -LQR_Gains(1);
+            K(1) = -LQR_Gains(1);
+            K(2) = -LQR_Gains(2);
             K(3) = -LQR_Gains(3);
         }
 
