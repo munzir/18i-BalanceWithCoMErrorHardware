@@ -8,9 +8,9 @@
 
 #include "helpers.h"
 
-#include "adrc.hpp"
 #include "kore/display.hpp"
-#include "lqr.hpp"
+#include "../../18h-Util/adrc.hpp"
+#include "../../18h-Util/lqr.hpp"
 #include "../../18h-Util/file_ops.hpp"
 //#include "ESO.hpp"
 
@@ -283,7 +283,7 @@ void controlSchunkGrippers () {
 /// The continuous control loop which has 4 state variables, {x, x., psi, psi.}, where
 /// x is for the position along the heading direction and psi is the heading angle. We create
 /// reference x and psi values from the joystick and follow them with pd control.
-void run () {
+void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
 
     // Send a message; set the event code and the priority
     somatic_d_event(&daemon_cx, SOMATIC__EVENT__PRIORITIES__NOTICE,
@@ -331,6 +331,8 @@ void run () {
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(4,1);
     Eigen::VectorXd B_thWheel = Eigen::VectorXd::Zero(3);
     Eigen::VectorXd B_thCOM = Eigen::VectorXd::Zero(3);
+    Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
+
     //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
     //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
     Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
@@ -344,6 +346,7 @@ void run () {
     //   0, 0, 300*100, 0,
     //   0, 0, 0, 300*300;
     //R << 500;
+
     while(!somatic_sig_received) {
 
         bool debug = (c_++ % 20 == 0);
@@ -511,7 +514,7 @@ void run () {
 
             // compute linearized dynamics
             computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
-            
+
             // adrc
             activeDisturbanceRejectionControl(A, B, Q, R, EthWheel, EthCOM, \
                 B_thWheel, B_thCOM, state, refState, dt, u_thWheel, u_thCOM);
@@ -524,9 +527,9 @@ void run () {
             u_thCOM << K.topLeftCorner<2,1>().dot(error.topLeftCorner<2,1>());
             u_thWheel << K(2)*error(2) + K(3)*error(3);
         }
-        
+
         u_spin << max(-30.0, min(30.0, -K.bottomLeftCorner<2,1>().dot(error.bottomLeftCorner<2,1>())));  ;
-        
+
         // Override the u_spin to exert a force with the end-effector
         // if(spinFT) computeSpin(u_spin);
 
@@ -593,7 +596,7 @@ void run () {
                     Eigen::Vector3d EthCOM_Init(state(0), state(1), 0.0);
                     Eigen::Vector3d EthCOM_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
                     EthCOM = (ESO*) new ESO(EthCOM_Init, EthCOM_ObsGains);
-        
+
                 }   else {
                     printf("\n\n\nCan't stand up, balancing error is too high!\n\n\n");
                 }
@@ -705,6 +708,34 @@ SkeletonPtr setParameters(SkeletonPtr robot, Eigen::MatrixXd betaParams, int bod
 /// The main thread
 int main(int argc, char* argv[]) {
 
+    //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
+    //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
+    Eigen::MatrixXd Q;
+    Eigen::MatrixXd R;
+
+    string QFilename = "../Q.txt";
+    //string QFilename = "Q.txt";
+    try {
+        cout << "Reading cost Q ...\n";
+        Q = readInputFileAsMatrix(QFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+    string RFilename = "../R.txt";
+    //string RFilename = "R.txt";
+    try {
+        cout << "Reading cost R ...\n";
+        R = readInputFileAsMatrix(RFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+
+    cout << "Q matrix: " << Q << endl;
+    cout << "R matrix: " << R << endl;
+
+
     // Load the world and the robot
     DartLoader dl;
     // world = dl.parseWorld("/etc/kore/scenes/01-World-Robot.urdf");
@@ -738,7 +769,6 @@ int main(int argc, char* argv[]) {
 */
 
     readGains();
-    readCosts();
 
     // Debug options from command line
     debugGlobal = 1; logGlobal = 0;
@@ -751,7 +781,7 @@ int main(int argc, char* argv[]) {
 
     // Initialize, run, destroy
     init();
-    run();
+    run(Q, R);
     destroy();
     return 0;
 }
