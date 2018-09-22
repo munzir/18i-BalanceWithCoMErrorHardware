@@ -2,7 +2,7 @@
  * @file helpers.h
  * @author Munzir
  * @date July 8th, 2013
- * @brief This file comtains some helper functions used for balancing	
+ * @brief This file comtains some helper functions used for balancing
  */
 
 #pragma once
@@ -50,36 +50,38 @@ bool myDebug;
 extern bool debugGlobal;
 
 /* ******************************************************************************************** */
-typedef Matrix<double, 6, 1> Vector6d;			///< A typedef for convenience to contain f/t values
-typedef Matrix<double, 7, 1> Vector7d;			///< A typedef for convenience to contain joint values
-typedef Matrix<double, 6, 6> Matrix6d;			///< A typedef for convenience to contain wrenches
+typedef Matrix<double, 6, 1> Vector6d;          ///< A typedef for convenience to contain f/t values
+typedef Matrix<double, 7, 1> Vector7d;          ///< A typedef for convenience to contain joint values
+typedef Matrix<double, 6, 6> Matrix6d;          ///< A typedef for convenience to contain wrenches
 
 /* ******************************************************************************************** */
 // Globals for imu, motors and joystick
 
-somatic_d_t daemon_cx;				///< The context of the current daemon
+somatic_d_t daemon_cx;              ///< The context of the current daemon
 
-Krang::Hardware* krang;				///< Interface for the motor and sensors on the hardware
-WorldPtr world;			///< the world representation in dart
-SkeletonPtr robot;			///< the robot representation in dart
+Krang::Hardware* krang;             ///< Interface for the motor and sensors on the hardware
+WorldPtr world;         ///< the world representation in dart
+WorldPtr good_world;            ///< the world for good robot (used only for standing up logic)
+SkeletonPtr robot;          ///< the robot representation in dart
+SkeletonPtr good_robot;         ///< the robot representation in dart used to determine if we can stand
 
 Somatic__WaistCmd *waistDaemonCmd = somatic_waist_cmd_alloc(); ///< Cmds for waist daemon
-ach_channel_t js_chan;				///< Read joystick data on this channel
+ach_channel_t js_chan;              ///< Read joystick data on this channel
 
-bool start = false;						///< Giving time to the user to get the robot in balancing angle
+bool start = false;                     ///< Giving time to the user to get the robot in balancing angle
 bool complyTorque = false;
 bool joystickControl = false;
-bool resetLeftFT = false, resetRightFT = false; 		
-bool overwriteFT = false;			///< To apply force downwards on purpose
-bool spinFT= false;						///< To apply force sideways on purpose
+bool resetLeftFT = false, resetRightFT = false;
+bool overwriteFT = false;           ///< To apply force downwards on purpose
+bool spinFT= false;                     ///< To apply force sideways on purpose
 double spinGoal = 0.0;
 double downGoal = 0.0;
-	
-double jsFwdAmp;				///< The gains for joystick forward/reverse input
-double jsSpinAmp;				///< The gains for joystick left/right spin input
 
-char b [10];						///< Stores the joystick button inputs
-double x [6];						///< Stores the joystick axes inputs
+double jsFwdAmp;                ///< The gains for joystick forward/reverse input
+double jsSpinAmp;               ///< The gains for joystick left/right spin input
+
+char b [10];                        ///< Stores the joystick button inputs
+double x [6];                       ///< Stores the joystick axes inputs
 /* ******************************************************************************************** */
 // All the freaking gains
 
@@ -95,15 +97,15 @@ extern Vector6d K_balLow;
 extern Vector2d J_balLow;
 extern Vector6d K_balHigh;
 extern Vector2d J_balHigh;
-extern Vector6d K;	
+extern Vector6d K;
 
 /* ******************************************************************************************** *
 // The arm indices to set/get configurations from dart
 
-extern std::vector <int> left_arm_ids;			///< Ids for left arm
-extern std::vector <int> right_arm_ids;			///< Ids for right arm
-extern std::vector <int> imuWaist_ids;			///< Ids for waist/imu
-extern std::vector <int> imuWaistTorso_ids;			///< Ids for waist/imu (needed for temporary adjustment for torso misalignment)
+extern std::vector <int> left_arm_ids;          ///< Ids for left arm
+extern std::vector <int> right_arm_ids;         ///< Ids for right arm
+extern std::vector <int> imuWaist_ids;          ///< Ids for waist/imu
+extern std::vector <int> imuWaistTorso_ids;         ///< Ids for waist/imu (needed for temporary adjustment for torso misalignment)
 
 /* ******************************************************************************************** */
 
@@ -113,8 +115,8 @@ Eigen::MatrixXd fix (const Eigen::MatrixXd& mat);
 /* ******************************************************************************************** */
 // Constants for end-effector wrench estimation
 
-//static const double eeMass = 2.3 + 0.169 + 0.000;			///< The mass of the robotiq end-effector
-static const double eeMass = 1.6 + 0.169 + 0.000;			///< The mass of the Schunk end-effector
+//static const double eeMass = 2.3 + 0.169 + 0.000;         ///< The mass of the robotiq end-effector
+static const double eeMass = 1.6 + 0.169 + 0.000;           ///< The mass of the Schunk end-effector
 static const Vector3d s2com (0.0, -0.008, 0.091); // 0.065 robotiq itself, 0.026 length of ext + 2nd
 
 /* ******************************************************************************************** */
@@ -123,27 +125,27 @@ static const Vector3d s2com (0.0, -0.008, 0.091); // 0.065 robotiq itself, 0.026
 /// Sets a global variable ('start') true if the user presses 's'
 void *kbhit(void *);
 
-/// Returns the values of axes 1 (left up/down) and 2 (right left/right) in the joystick 
+/// Returns the values of axes 1 (left up/down) and 2 (right left/right) in the joystick
 bool getJoystickInput(double& js_forw, double& js_spin);
 
 /// Update reference left and right wheel pos/vel from joystick data where dt is last iter. time
 void updateReference (double js_forw, double js_spin, double dt, Vector6d& refState);
 
-/// Get the joint values from the encoders and the imu and compute the center of mass as well 
-void getState(Vector6d& state, double dt, Vector3d* com = NULL);
+/// Get the joint values from the encoders and the imu and compute the center of mass as well
+void getState(Vector6d& state, double dt, Vector3d* com = NULL, SkeletonPtr rob = robot);
 
 /// Updates the dart robot representation
 void updateDart (double imu);
 
 /// Reads imu values from the ach channels and computes the imu values
-void getImu (ach_channel_t* imuChan, double& _imu, double& _imuSpeed, double dt, 
+void getImu (ach_channel_t* imuChan, double& _imu, double& _imuSpeed, double dt,
              filter_kalman_t* kf);
 
 /// Reads FT data from ach channels
 //bool getFT (somatic_d_t& daemon_cx, ach_channel_t& ft_chan, Vector6d& data);
 
 /// Computes the offset due to the weights of the end-effector in the FT sensor readings
-//void computeOffset (double imu, double waist, const somatic_motor_t& lwa, const Vector6d& raw, 
+//void computeOffset (double imu, double waist, const somatic_motor_t& lwa, const Vector6d& raw,
 //                    SkeletonDynamics& robot, Vector6d& offset, bool left);
 
 /// Givent the raw FT data, gives the wrench in the world frame acting on the FT sensor
