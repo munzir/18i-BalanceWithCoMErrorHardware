@@ -1,0 +1,28 @@
+Format of gains.txt file
+State: thCOM, dthCOM, thWheels, dthWheels, thSpin, dthSpin (columns)
+Modes from 1 to 6 as rows
+Modes: groundlow, stand, sit, balancelow, balancehigh, groundhigh
+
+LQR Gain Order: thCOM, thWheel, dthCOM, dthWheel
+        -551.145, -13.8564, -237.331, -33.659
+
+reordered to fit the order of first four values in State
+-551.145, -237.331, -13.8564, -33.659
+
+current = i
+torque = t
+Gear Ratio = GT
+Motor Constant = km
+i = t / (GR * km)
+
+t = klqrt * estate
+
+i = klqri * estate
+
+==> klqri = klqrt / (GR * km)
+
+Gains read after gain conversion
+
+-433.699, -10.9037, -186.757, -26.4864
+After ordering them to conform to state order
+-433.699, -186.757, -10.9037, -26.4864
