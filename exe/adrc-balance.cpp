@@ -366,6 +366,7 @@ void run () {
         computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
         lqr(A, B, Q, R, LQR_Gains);
         LQR_Gains /= (GR * km);
+        
 
         if(debug) cout << "lqr gains" << LQR_Gains.transpose() << endl;
         if(debug) cout << "\nstate: " << state.transpose() << endl;
@@ -500,6 +501,16 @@ void run () {
             // error(0) -= 0.005;
         }
         if(debug) cout << "error: " << error.transpose() << ", imu: " << krang->imu / M_PI * 180.0 << endl;
+
+        // Dynamic LQR
+        // If in stand, balLo or balHi mode, replace gains from gains.txt with LQR gains
+        if(MODE == 2 || MODE == 4 || MODE == 5) {
+            // read gains_info.txt to understand the following
+            K(0) = -LQR_Gains(0);
+            K(1) = -LQR_Gains(2);
+            K(2) = -LQR_Gains(1);
+            K(3) = -LQR_Gains(3);
+        }
 
         // Compute the current
         double u_theta = K.topLeftCorner<2,1>().dot(error.topLeftCorner<2,1>());
