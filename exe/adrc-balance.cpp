@@ -8,9 +8,9 @@
 
 #include "helpers.h"
 
-#include "adrc.hpp"
 #include "kore/display.hpp"
-#include "lqr.hpp"
+#include "../../18h-Util/adrc.hpp"
+#include "../../18h-Util/lqr.hpp"
 #include "../../18h-Util/file_ops.hpp"
 
 using namespace dart::utils;
@@ -326,14 +326,36 @@ void run () {
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(4,1);
     Eigen::VectorXd B_thWheel = Eigen::VectorXd::Zero(3);
     Eigen::VectorXd B_thCOM = Eigen::VectorXd::Zero(3);
+    Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
+
     //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
     //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
-    Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
+    Eigen::MatrixXd Q;
+    Eigen::MatrixXd R;
+
+    string QFilename = "../Q.txt";
+    try {
+        cout << "Reading cost Q...\n";
+        Q = readInputFileAsMatrix(QFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+    string RFilename = "../R.txt";
+    try {
+        cout << "Reading cost R...\n";
+        R = readInputFileAsMatrix(RFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+    }
+
     //Q << 300*1, 0, 0, 0,
     //   0, 300*320, 0, 0,
     //   0, 0, 300*100, 0,
     //   0, 0, 0, 300*300;
     //R << 500;
+
     while(!somatic_sig_received) {
 
         bool debug = (c_++ % 20 == 0);
@@ -703,7 +725,6 @@ int main(int argc, char* argv[]) {
 */
 
     readGains();
-    readCosts();
 
     // Debug options from command line
     debugGlobal = 1; logGlobal = 0;
