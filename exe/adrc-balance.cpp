@@ -533,10 +533,7 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         // If in stand, balLo or balHi mode, replace gains from gains.txt with LQR gains
         if(MODE == 2 || MODE == 4 || MODE == 5) {
             // read gains_info.txt to understand the following
-            K(0) = -LQR_Gains(0);
-            K(1) = -LQR_Gains(1);
-            K(2) = -LQR_Gains(2);
-            K(3) = -LQR_Gains(3);
+            K = -LQR_Gains;
         }
 
         // Compute the current
