@@ -334,21 +334,26 @@ void run () {
     Eigen::MatrixXd R;
 
     string QFilename = "../Q.txt";
+    //string QFilename = "Q.txt";
     try {
-        cout << "Reading cost Q...\n";
+        cout << "Reading cost Q ...\n";
         Q = readInputFileAsMatrix(QFilename);
         cout << "|-> Done\n";
     } catch (exception& e) {
         cout << e.what() << endl;
     }
     string RFilename = "../R.txt";
+    //string RFilename = "R.txt";
     try {
-        cout << "Reading cost R...\n";
+        cout << "Reading cost R ...\n";
         R = readInputFileAsMatrix(RFilename);
         cout << "|-> Done\n";
     } catch (exception& e) {
         cout << e.what() << endl;
     }
+
+    cout << "Q matrix: " << Q << endl;
+    cout << "R matrix: " << R << endl;
 
     //Q << 300*1, 0, 0, 0,
     //   0, 300*320, 0, 0,
