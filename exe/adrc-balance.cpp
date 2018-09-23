@@ -368,14 +368,14 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         if(debug) cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n" << endl;
 
         // Cancel any position built up in previous mode
-        if(lastMode != MODE) {
-            refState(2) = state(2), refState(4) = state(4);
-            lastMode = MODE;
-        }
-        if(lastStart != start) {
-            refState(2) = state(2), refState(4) = state(4);
-            lastStart = start;
-        }
+        //if(lastMode != MODE) {
+        //    refState(2) = state(2), refState(4) = state(4);
+        //    lastMode = MODE;
+        //}
+        //if(lastStart != start) {
+        //    refState(2) = state(2), refState(4) = state(4);
+        //    lastStart = start;
+        //}
 
         // =======================================================================
         // Get inputs: time, joint states, joystick and external forces
@@ -391,6 +391,11 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
 
         // lqr gains
         computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
+
+        // Print out A & B matrices
+        if(debug) cout << "A matrix: " << A << endl;
+        if(debug) cout << "B matrix: " << B << endl;
+
         lqr(A, B, Q, R, LQR_Gains);
         LQR_Gains /= (GR * km);
 
@@ -517,6 +522,7 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
                 MODE = 4;
                 mode4iter = 0;
                 K = K_balLow;
+
             }
         }
         // COM error correction in balLow mode
