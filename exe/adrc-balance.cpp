@@ -380,7 +380,7 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         getState(state, dt, &com);
 
         // lqr gains
-        
+
         // Print out A & B matrices
         if(debug) cout << "A matrix: " << A << endl;
         if(debug) cout << "B matrix: " << B << endl;
@@ -541,8 +541,11 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
             computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
 
             // adrc
+            Eigen::VectorXd lqrGains = Eigen::VectorXd::Zero(4);
             activeDisturbanceRejectionControl(A, B, Q, R, lqrHackRatios, EthWheel, EthCOM, \
-                B_thWheel, B_thCOM, state, refState, dt, u_thWheel, u_thCOM);
+                B_thWheel, B_thCOM, state, refState, dt, lqrGains, u_thWheel, u_thCOM);
+
+            if(debug) cout << "lqrGains: " << (lqrGains.transpose() /= (GR*km)) << endl;
 
             // torque to current conversion
             u_thWheel /= (GR*km);
