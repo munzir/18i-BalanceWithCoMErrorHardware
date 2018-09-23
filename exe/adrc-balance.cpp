@@ -366,6 +366,7 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         //    refState(2) = state(2), refState(4) = state(4);
         //    lastStart = start;
         //}
+        //
 
         // =======================================================================
         // Get inputs: time, joint states, joystick and external forces
@@ -378,6 +379,19 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
 
         // Get the current state and ask the user if they want to start
         getState(state, dt, &com);
+
+        if (MODE == 7) {
+            // Initialize ESOs if its the first iteration of the while loop
+            Eigen::Vector3d EthWheel_Init(state(2), state(3), 0.0);
+            Eigen::Vector3d EthWheel_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
+            EthWheel = (ESO*) new ESO(EthWheel_Init, EthWheel_ObsGains);
+
+            Eigen::Vector3d EthCOM_Init(state(0), state(1), 0.0);
+            Eigen::Vector3d EthCOM_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
+            EthCOM = (ESO*) new ESO(EthCOM_Init, EthCOM_ObsGains);
+
+            MODE = 4;
+        }
 
         // lqr gains
 
@@ -517,7 +531,7 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
             if(fabs(state(0)) < 0.034) mode4iter++;
             // Change to mode 4 (balance low) if stood up enough
             if(mode4iter > mode4iterLimit) {
-                MODE = 4;
+                MODE = 7;
                 mode4iter = 0;
                 K = K_balLow;
 
@@ -534,8 +548,26 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         if(debug) cout << "error: " << error.transpose() << ", imu: " << krang->imu / M_PI * 180.0 << endl;
 
         // Dynamic LQR
+        if (MODE == 2 || MODE == 7) {
+
+            // compute linearized dynamics
+            computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
+
+            lqr(A, B, Q, R, LQR_Gains);
+
+            if(debug) cout << "lqrGains: " << (LQR_Gains.transpose() /= (GR*km)) << endl;
+
+            LQR_Gains /= (GR*km);
+            K.head(4) << lqrHackRatios * -LQR_Gains;
+
+            u_thCOM << K.topLeftCorner<2,1>().dot(error.topLeftCorner<2,1>());
+            u_thWheel << K(2)*error(2) + K(3)*error(3);
+        }
+
+
+        // ADRC
         // If in stand, balLo or balHi mode, perform ADRC
-        if(MODE == 2 || MODE == 4 || MODE == 5) {
+        else if(MODE == 4 || MODE == 5) {
 
             // compute linearized dynamics
             computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
@@ -615,15 +647,6 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
                     printf("\n\n\nMode 2\n\n\n");
                     K = K_stand;
                     MODE = 2;
-
-                    // Initialize ESOs if its the first iteration of the while loop
-                    Eigen::Vector3d EthWheel_Init(state(2), state(3), 0.0);
-                    Eigen::Vector3d EthWheel_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
-                    EthWheel = (ESO*) new ESO(EthWheel_Init, EthWheel_ObsGains);
-
-                    Eigen::Vector3d EthCOM_Init(state(0), state(1), 0.0);
-                    Eigen::Vector3d EthCOM_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
-                    EthCOM = (ESO*) new ESO(EthCOM_Init, EthCOM_ObsGains);
 
                 }   else {
                     printf("\n\n\nCan't stand up, balancing error is too high!\n\n\n");
