@@ -70,6 +70,11 @@ Vector6d rightWheelWrench;
 bool debugGlobal = false, logGlobal = true;
 
 /* ******************************************************************************************** */
+// LQR hack ratios
+
+Eigen::MatrixXd lqrHackRatios;
+
+/* ******************************************************************************************** */
 /*void computeSpin (double& u_spin) {
 
     // static const double goal = 10.0;
@@ -396,9 +401,22 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         if(debug) cout << "A matrix: " << A << endl;
         if(debug) cout << "B matrix: " << B << endl;
 
+        if (c_ == 1) {
+            // Call lqr to compute hack ratios
+            lqr(A, B, Q, R, LQR_Gains);
+            LQR_Gains /= (GR * km);
+
+            lqrHackRatios = Eigen::MatrixXd::Zero(4, 4);
+            for (int i = 0; i < lqrHackRatios.cols(); i++) {
+
+                lqrHackRatios(i, i) = K_stand(i) / -LQR_Gains(i);
+
+            }
+        }
+
         lqr(A, B, Q, R, LQR_Gains);
         LQR_Gains /= (GR * km);
-
+        LQR_Gains = lqrHackRatios * LQR_Gains;
 
         if(debug) cout << "lqr gains" << LQR_Gains.transpose() << endl;
         if(debug) cout << "\nstate: " << state.transpose() << endl;
@@ -539,7 +557,7 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         // If in stand, balLo or balHi mode, replace gains from gains.txt with LQR gains
         if(MODE == 2 || MODE == 4 || MODE == 5) {
             // read gains_info.txt to understand the following
-            K = -LQR_Gains;
+            K.head(4) = -LQR_Gains;
         }
 
         // Compute the current
