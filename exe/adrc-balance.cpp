@@ -12,6 +12,7 @@
 #include "../../18h-Util/adrc.hpp"
 #include "../../18h-Util/lqr.hpp"
 #include "../../18h-Util/file_ops.hpp"
+//#include "ESO.hpp"
 
 using namespace dart::utils;
 using namespace Krang;
@@ -315,6 +316,10 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
     rightFTData << 0,0,0,0,0,0;
     size_t leftFTIter = 0, rightFTIter = 0;
 
+    // Initialize Extended State Observers
+    ESO *EthWheel;
+    ESO *EthCOM;
+
     // Torque to current conversion
     // Motor Constant
     // TODO: Copy comments from repo 28 mpc branch
@@ -333,33 +338,13 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
     Eigen::VectorXd B_thCOM = Eigen::VectorXd::Zero(3);
     Eigen::VectorXd LQR_Gains = Eigen::VectorXd::Zero(4);
 
+    Eigen::VectorXd u_thWheel, u_thCOM, u_spin;
+    u_thWheel = Eigen::VectorXd::Zero(1);
+    u_thCOM = Eigen::VectorXd::Zero(1);
+    u_spin = Eigen::VectorXd::Zero(1);
+
     //Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(4, 4);
     //Eigen::MatrixXd R = Eigen::MatrixXd::Zero(1, 1);
-    //Eigen::MatrixXd Q;
-    //Eigen::MatrixXd R;
-
-    //string QFilename = "../Q.txt";
-    ////string QFilename = "Q.txt";
-    //try {
-    //    cout << "Reading cost Q ...\n";
-    //    Q = readInputFileAsMatrix(QFilename);
-    //    cout << "|-> Done\n";
-    //} catch (exception& e) {
-    //    cout << e.what() << endl;
-    //}
-    //string RFilename = "../R.txt";
-    ////string RFilename = "R.txt";
-    //try {
-    //    cout << "Reading cost R ...\n";
-    //    R = readInputFileAsMatrix(RFilename);
-    //    cout << "|-> Done\n";
-    //} catch (exception& e) {
-    //    cout << e.what() << endl;
-    //}
-
-    //cout << "Q matrix: " << Q << endl;
-    //cout << "R matrix: " << R << endl;
-
     //Q << 300*1, 0, 0, 0,
     //   0, 300*320, 0, 0,
     //   0, 0, 300*100, 0,
@@ -395,13 +380,13 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         getState(state, dt, &com);
 
         // lqr gains
-        computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
-
+        
         // Print out A & B matrices
         if(debug) cout << "A matrix: " << A << endl;
         if(debug) cout << "B matrix: " << B << endl;
 
         if (c_ == 1) {
+            computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
             // Call lqr to compute hack ratios
             lqr(A, B, Q, R, LQR_Gains);
             LQR_Gains /= (GR * km);
@@ -414,11 +399,6 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
             }
         }
 
-        lqr(A, B, Q, R, LQR_Gains);
-        LQR_Gains /= (GR * km);
-        LQR_Gains = lqrHackRatios * LQR_Gains;
-
-        if(debug) cout << "lqr gains" << LQR_Gains.transpose() << endl;
         if(debug) cout << "\nstate: " << state.transpose() << endl;
         if(debug) cout << "com: " << com.transpose() << endl;
         if(debug) cout << "WAIST ANGLE: " << krang->waist->pos[0] << endl;
@@ -554,27 +534,36 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
         if(debug) cout << "error: " << error.transpose() << ", imu: " << krang->imu / M_PI * 180.0 << endl;
 
         // Dynamic LQR
-        // If in stand, balLo or balHi mode, replace gains from gains.txt with LQR gains
+        // If in stand, balLo or balHi mode, perform ADRC
         if(MODE == 2 || MODE == 4 || MODE == 5) {
-            // read gains_info.txt to understand the following
-            K.head(4) = -LQR_Gains;
+
+            // compute linearized dynamics
+            computeLinearizedDynamics(robot, A, B, B_thWheel, B_thCOM);
+
+            // adrc
+            activeDisturbanceRejectionControl(A, B, Q, R, lqrHackRatios, EthWheel, EthCOM, \
+                B_thWheel, B_thCOM, state, refState, dt, u_thWheel, u_thCOM);
+
+            // torque to current conversion
+            u_thWheel /= (GR*km);
+            u_thCOM /= (GR*km);
+        }
+        else {
+            u_thCOM << K.topLeftCorner<2,1>().dot(error.topLeftCorner<2,1>());
+            u_thWheel << K(2)*error(2) + K(3)*error(3);
         }
 
-        // Compute the current
-        double u_theta = K.topLeftCorner<2,1>().dot(error.topLeftCorner<2,1>());
-        double u_x = K(2)*error(2) + K(3)*error(3);
-        double u_spin =  -K.bottomLeftCorner<2,1>().dot(error.bottomLeftCorner<2,1>());
-        u_spin = max(-30.0, min(30.0, u_spin));
+        u_spin << max(-30.0, min(30.0, -K.bottomLeftCorner<2,1>().dot(error.bottomLeftCorner<2,1>())));  ;
 
         // Override the u_spin to exert a force with the end-effector
-//      if(spinFT) computeSpin(u_spin);
+        // if(spinFT) computeSpin(u_spin);
 
         // Compute the input for left and right wheels
-        if(joystickControl && ((MODE == 1) || (MODE == 6))) {u_x = 0.0; u_spin = 0.0;}
-        double input [2] = {u_theta + u_x + u_spin, u_theta + u_x - u_spin};
+        if(joystickControl && ((MODE == 1) || (MODE == 6))) {u_thWheel << 0.0; u_spin << 0.0;}
+        double input [2] = {u_thCOM(0) + u_thWheel(0) + u_spin(0), u_thCOM(0) + u_thWheel(0) - u_spin(0)};
         input[0] = max(-49.0, min(49.0, input[0]));
         input[1] = max(-49.0, min(49.0, input[1]));
-        if(debug) printf("u_theta: %lf, u_x: %lf, u_spin: %lf\n", u_theta, u_x, u_spin);
+        if(debug) printf("u_theta: %lf, u_x: %lf, u_spin: %lf\n", u_thCOM, u_thWheel, u_spin);
         lastUleft = input[0], lastUright = input[1];
 
         // Set the motor velocities
@@ -623,6 +612,16 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
                     printf("\n\n\nMode 2\n\n\n");
                     K = K_stand;
                     MODE = 2;
+
+                    // Initialize ESOs if its the first iteration of the while loop
+                    Eigen::Vector3d EthWheel_Init(state(2), state(3), 0.0);
+                    Eigen::Vector3d EthWheel_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
+                    EthWheel = (ESO*) new ESO(EthWheel_Init, EthWheel_ObsGains);
+
+                    Eigen::Vector3d EthCOM_Init(state(0), state(1), 0.0);
+                    Eigen::Vector3d EthCOM_ObsGains(1159.99999999673, 173438.396407957, 1343839.4084839);
+                    EthCOM = (ESO*) new ESO(EthCOM_Init, EthCOM_ObsGains);
+
                 }   else {
                     printf("\n\n\nCan't stand up, balancing error is too high!\n\n\n");
                 }
@@ -634,6 +633,11 @@ void run (Eigen::MatrixXd Q, Eigen::MatrixXd R) {
                     printf("\n\n\nMode 3\n\n\n");
                     K = K_sit;
                     MODE = 3;
+
+                    // Delete the ESOs
+                    delete EthWheel;
+                    delete EthCOM;
+
                 } else {
                     printf("\n\n\nCan't sit down, Waist is too high!\n\n\n");
                 }

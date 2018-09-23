@@ -250,36 +250,36 @@ void *kbhit(void *) {
 				somatic_motor_reset(&daemon_cx, krang->arms[RIGHT]);
 			}
 		}
-		else if(input=='1') {
-			printf("Mode 1\n");
-			K = K_groundLo;
-			MODE = 1;
-		}
-		else if(input=='2') {
-			printf("Mode 2\n");
-			K = K_stand;
-			MODE = 2;
-		}
-		else if(input=='3') {
-			printf("Mode 3\n");
-			K = K_sit;
-			MODE = 3;
-		}
-		else if(input=='4') {
-			printf("Mode 4\n");
-			K = K_balLow;
-			MODE = 4;
-		}
-		else if(input=='5') {
-			printf("Mode 5\n");
-			K = K_balHigh;
-			MODE = 5;
-		}
-		else if(input=='6') {
-			printf("Mode 6\n");
-			K = K_groundHi;
-			MODE = 6;
-		}
+		// else if(input=='1') {
+		// 	printf("Mode 1\n");
+		// 	K = K_groundLo;
+		// 	MODE = 1;
+		// }
+		// else if(input=='2') {
+		// 	printf("Mode 2\n");
+		// 	K = K_stand;
+		// 	MODE = 2;
+		// }
+		// else if(input=='3') {
+		// 	printf("Mode 3\n");
+		// 	K = K_sit;
+		// 	MODE = 3;
+		// }
+		// else if(input=='4') {
+		// 	printf("Mode 4\n");
+		// 	K = K_balLow;
+		// 	MODE = 4;
+		// }
+		// else if(input=='5') {
+		// 	printf("Mode 5\n");
+		// 	K = K_balHigh;
+		// 	MODE = 5;
+		// }
+		// else if(input=='6') {
+		// 	printf("Mode 6\n");
+		// 	K = K_groundHi;
+		// 	MODE = 6;
+		// }
 
 
 	}
